@@ -70,10 +70,10 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        float clean = data[sample] * inputGain * 3.0f;    // Входной усилитель
-        float clipped     = std::tanh(clean* (gain + 1.0f));            // Клиппинг (мягкий)
-        float compensated = clipped / (gain * 0.75f + 1.0f);  //Компенсация прироста громкости
-        data[sample]      = compensated * volume * 0.2f;            // Применение выходной громкости
+        float clean = data[sample] * inputGain * 4.0f;    // Входной усилитель
+        float clipped     = std::tanh(clean* (gain + 5.0f));            // Клиппинг (мягкий)
+        float compensated = clipped / (gain * 0.6f + 5.0f);  //Компенсация прироста громкости
+        data[sample]      = compensated * volume * 2.0f;            // Применение выходной громкости
     }
 
     // Выходной Low-pass фильтр (~1 кГц)
@@ -117,7 +117,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("INPUT_GAIN", "Input Gain", 0.1f, 10.0f, 5.0f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("INPUT_GAIN", "Input Gain", 1.0f, 10.0f, 5.0f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("GAIN", "Gain", 0.0f, 20.0f, 10.0f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("TONE", "Tone", 0.0f, 1.0f, 0.5f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("VOLUME", "Volume", 0.0f, 1.0f, 0.5f));
