@@ -32,12 +32,12 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     midCut.prepare(spec);
 
     // Срез низов на входе (~720 Гц)
-    *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 200.0f, 2.0f);
+    *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 62.0f, 2.0f);
 
     // Срез верхов после искажения (~1 кГц)
-    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 1000.0f, 0.4f);
+    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 1000.0f, 0.f);
     // Срез середины после обработки (~700 Гц)
-    *midCut.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), 700.0f, 2.0f, -3.0f);
+    *midCut.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), 700.0f, 2.0f, juce::Decibels::decibelsToGain(-3.0f));
 }
 
 void AudioPluginAudioProcessor::releaseResources() {}
@@ -73,9 +73,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        float clean = data[sample] * inputGain * 4.0f;    // Входной усилитель
+        float clean = data[sample] * inputGain * 3.0f;    // Входной усилитель
         float clipped     = std::tanh(clean* (gain + 5.0f));            // Клиппинг (мягкий)
-        float compensated = clipped / (gain * 0.4f + 5.0f) - (0.5f * clean);  //Компенсация прироста громкости и эмуляция обратной связи
+        float compensated = clipped / (gain * 0.35f + 5.0f);  //Компенсация прироста громкости
         data[sample]      = compensated * volume * 3.0f;            // Применение выходной громкости
     }
 
@@ -95,7 +95,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     }
     toneHighShelf.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    // Срез середины
+    // Вырез середины
     midCut.process(juce::dsp::ProcessContextReplacing<float>(block));
 }
 
