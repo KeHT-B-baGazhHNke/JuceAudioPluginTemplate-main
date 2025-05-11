@@ -28,13 +28,16 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     inputHPF.prepare(spec);
     postLPF.prepare(spec);
-    toneEQ.prepare(spec);
+    toneHighShelf.prepare(spec);
+    midCut.prepare(spec);
 
     // Срез низов на входе (~720 Гц)
-    *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 720.0, 0.9f);
+    *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 200.0f, 2.0f);
 
     // Срез верхов после искажения (~1 кГц)
-    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 1000.0, 0.4f);
+    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 1000.0f, 0.4f);
+    // Срез середины после обработки (~700 Гц)
+    *midCut.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), 700.0f, 2.0f, -3.0f);
 }
 
 void AudioPluginAudioProcessor::releaseResources() {}
@@ -72,8 +75,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     {
         float clean = data[sample] * inputGain * 4.0f;    // Входной усилитель
         float clipped     = std::tanh(clean* (gain + 5.0f));            // Клиппинг (мягкий)
-        float compensated = clipped / (gain * 0.6f + 5.0f);  //Компенсация прироста громкости
-        data[sample]      = compensated * volume * 2.0f;            // Применение выходной громкости
+        float compensated = clipped / (gain * 0.4f + 5.0f) - (0.5f * clean);  //Компенсация прироста громкости и эмуляция обратной связи
+        data[sample]      = compensated * volume * 3.0f;            // Применение выходной громкости
     }
 
     // Выходной Low-pass фильтр (~1 кГц)
@@ -84,14 +87,16 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     {
         lastToneValue = tone;
 
-        float toneFreq = juce::jmap(tone, 800.0f, 2500.0f);      // Центр частоты меняется
-        float toneGainDb = juce::jmap(tone, -10.0f, 15.0f);        // Амплитуда изменения
-        float Q = 0.7f;                                          // Ширина пика
+        // Настройка high-shelf фильтра на основе ручки tone
+        float toneFreq = 1000.0f;  // Частота фильтра high-shelf
+        float toneGainDb = juce::jmap(tone, -3.0f, 12.0f);  // амплитуда фильтра
 
-        *toneEQ.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), toneFreq, Q, juce::Decibels::decibelsToGain(toneGainDb));
+        *toneHighShelf.state = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(getSampleRate(), toneFreq, 0.707f, juce::Decibels::decibelsToGain(toneGainDb));
     }
-    toneEQ.process(juce::dsp::ProcessContextReplacing<float>(block));
+    toneHighShelf.process(juce::dsp::ProcessContextReplacing<float>(block));
 
+    // Срез середины
+    midCut.process(juce::dsp::ProcessContextReplacing<float>(block));
 }
 
 bool AudioPluginAudioProcessor::hasEditor() const { return true; }
