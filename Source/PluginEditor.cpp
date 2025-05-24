@@ -51,7 +51,7 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillAll (juce::Colours::black);
     g.setColour (juce::Colours::white);
     g.setFont (18.0f);
-    g.drawFittedText ("Ibanez TS9 Emulation", getLocalBounds(), juce::Justification::centredTop, 1);
+    g.drawFittedText ("Guitar Amp Emulation", getLocalBounds(), juce::Justification::centredTop, 1);
 }
 
 void AudioPluginAudioProcessorEditor::resized()

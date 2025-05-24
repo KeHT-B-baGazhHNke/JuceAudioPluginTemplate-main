@@ -32,7 +32,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     midCut.prepare(spec);
     cabIR.prepare(spec);
 
-    // Срез низов на входе (~720 Гц)
+    // Срез низов на входе (~62 Гц)
     *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 62.0f, 2.0f);
 
     // Срез верхов после искажения (~1 кГц)
@@ -86,7 +86,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     // Оборачиваем буфер в DSP-блок
     juce::dsp::AudioBlock<float> block(buffer);
 
-    // Входной High-pass фильтр (~720 Гц)
+    // Входной High-pass фильтр (~62 Гц)
     inputHPF.process(juce::dsp::ProcessContextReplacing<float>(block));
 
     // Получаем указатель на единственный канал (моно)
@@ -95,7 +95,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        float clean = data[sample] * inputGain * 3.0f;    // Входной усилитель
+        float clean = data[sample] * inputGain * 3.0f;    // Входное усиление
         float clipped     = std::tanh(clean* (gain + 5.0f));            // Клиппинг (мягкий)
         float compensated = clipped / (gain * 0.35f + 5.0f);  //Компенсация прироста громкости
         data[sample]      = compensated * volume * 3.0f;            // Применение выходной громкости

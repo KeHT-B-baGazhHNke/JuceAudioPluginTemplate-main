@@ -1,8 +1,6 @@
 #pragma once
 
 #include "PluginProcessor.h"
-
-//==============================================================================
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
 {
 public:
@@ -18,11 +16,8 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttachment, toneAttachment, volumeAttachment;
     juce::Slider inputGainSlider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inputGainAttachment;
-
-    // Кнопка байпаса
     juce::ToggleButton bypassButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAttachment;
-
     juce::TextButton loadIRButton { "Load IR" };
     juce::ToggleButton bypassIRToggle { "Bypass IR" };
 
