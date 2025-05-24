@@ -20,6 +20,20 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(volumeSlider);
     addAndMakeVisible(inputGainSlider);
     addAndMakeVisible(bypassButton);
+    addAndMakeVisible(loadIRButton);
+    addAndMakeVisible(bypassIRToggle);
+
+    loadIRButton.onClick = [this]()
+    {
+        juce::FileChooser chooser("Select an IR file", {}, "*.wav");
+        if (chooser.browseForFileToOpen())
+            processor.loadImpulseResponse(chooser.getResult());
+    };
+
+    bypassIRToggle.onClick = [this]()
+    {
+        processor.setIRBypass(bypassIRToggle.getToggleState());
+    };
 
     gainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, "GAIN", gainSlider);
     toneAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, "TONE", toneSlider);
@@ -27,7 +41,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     inputGainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, "INPUT_GAIN", inputGainSlider);
     bypassAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.apvts, "BYPASS", bypassButton);
 
-    setSize (500, 400);
+    setSize (500, 500);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor() {}
@@ -50,4 +64,6 @@ void AudioPluginAudioProcessorEditor::resized()
     toneSlider.setBounds(row.removeFromLeft(100));
     volumeSlider.setBounds(row.removeFromLeft(100));
     bypassButton.setBounds(200, 300, 30, 100);
+    loadIRButton.setBounds(200, 350, 80, 30);
+    bypassIRToggle.setBounds(200, 450, 100, 30);
 }

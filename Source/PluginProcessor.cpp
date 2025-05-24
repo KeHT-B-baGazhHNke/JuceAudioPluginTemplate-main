@@ -11,16 +11,16 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
 
 const juce::String AudioPluginAudioProcessor::getName() const { return JucePlugin_Name; }
-//bool AudioPluginAudioProcessor::acceptsMidi() const { return false; }
-//bool AudioPluginAudioProcessor::producesMidi() const { return false; }
-//bool AudioPluginAudioProcessor::isMidiEffect() const { return false; }
-//double AudioPluginAudioProcessor::getTailLengthSeconds() const { return 0.0; }
+bool AudioPluginAudioProcessor::acceptsMidi() const { return false; }
+bool AudioPluginAudioProcessor::producesMidi() const { return false; }
+bool AudioPluginAudioProcessor::isMidiEffect() const { return false; }
+double AudioPluginAudioProcessor::getTailLengthSeconds() const { return 0.0; }
 
-//int AudioPluginAudioProcessor::getNumPrograms() { return 1; }
-//int AudioPluginAudioProcessor::getCurrentProgram() { return 0; }
-//void AudioPluginAudioProcessor::setCurrentProgram (int) {}
-//const juce::String AudioPluginAudioProcessor::getProgramName (int) { return {}; }
-//void AudioPluginAudioProcessor::changeProgramName (int, const juce::String&) {}
+int AudioPluginAudioProcessor::getNumPrograms() { return 1; }
+int AudioPluginAudioProcessor::getCurrentProgram() { return 0; }
+void AudioPluginAudioProcessor::setCurrentProgram (int) {}
+const juce::String AudioPluginAudioProcessor::getProgramName (int) { return {}; }
+void AudioPluginAudioProcessor::changeProgramName (int, const juce::String&) {}
 
 void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
@@ -30,6 +30,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     postLPF.prepare(spec);
     toneHighShelf.prepare(spec);
     midCut.prepare(spec);
+    cabIR.prepare(spec);
 
     // Срез низов на входе (~720 Гц)
     *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 62.0f, 2.0f);
@@ -47,6 +48,27 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
     return layouts.getMainInputChannelSet()  == juce::AudioChannelSet::mono()
         && layouts.getMainOutputChannelSet() == juce::AudioChannelSet::mono();
 }
+
+void AudioPluginAudioProcessor::loadImpulseResponse(const juce::File& irFile)
+{
+    if (irFile.existsAsFile())
+    {
+        cabIR.loadImpulseResponse(irFile,
+                                  juce::dsp::Convolution::Stereo::no,
+                                  juce::dsp::Convolution::Trim::no,
+                                  0);
+        irLoaded = true;
+        irBypassed = false;
+    }
+}
+
+void AudioPluginAudioProcessor::setIRBypass(bool shouldBypass)
+{
+    irBypassed = shouldBypass;
+}
+
+bool AudioPluginAudioProcessor::isIRLoaded() const { return irLoaded; }
+bool AudioPluginAudioProcessor::isIRBypassed() const { return irBypassed; }
 
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
@@ -97,6 +119,10 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
     // Вырез середины
     midCut.process(juce::dsp::ProcessContextReplacing<float>(block));
+
+    if (irLoaded && !irBypassed)
+        cabIR.process(juce::dsp::ProcessContextReplacing<float>(block));
+
 }
 
 bool AudioPluginAudioProcessor::hasEditor() const { return true; }

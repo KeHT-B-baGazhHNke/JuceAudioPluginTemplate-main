@@ -11,7 +11,6 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
-
 private:
     AudioPluginAudioProcessor& processorRef;
 
@@ -23,6 +22,9 @@ private:
     // Кнопка байпаса
     juce::ToggleButton bypassButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAttachment;
-    
+
+    juce::TextButton loadIRButton { "Load IR" };
+    juce::ToggleButton bypassIRToggle { "Bypass IR" };
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };
