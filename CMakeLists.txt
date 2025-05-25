@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(Guitar Amp Emulation)
+project(Guitar_Amp_Emulation)
 
 
 set(CMAKE_CXX_STANDARD 17)
@@ -30,7 +30,7 @@ set(SourceFiles
 )
 
 juce_add_plugin(${PROJECT_NAME}
-        COMPANY_NAME theaudioprogrammer
+        COMPANY_NAME Podzatyl'nik
         IS_SYNTH FALSE
         NEEDS_MIDI_INPUT FALSE
         NEEDS_MIDI_OUTPUT FALSE
