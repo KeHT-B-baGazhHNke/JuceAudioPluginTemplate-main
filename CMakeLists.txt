@@ -53,6 +53,7 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/ASIOSDK
         ${CMAKE_CURRENT_SOURCE_DIR}/ASIOSDK/common
         ${CMAKE_CURRENT_SOURCE_DIR}/ASIOSDK/host
+        ${CMAKE_CURRENT_SOURCE_DIR}/Resources
 )
 
 target_compile_definitions(${PROJECT_NAME}

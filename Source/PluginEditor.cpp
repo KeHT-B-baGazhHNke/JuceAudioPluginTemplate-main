@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "background_data.h"
 
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
@@ -7,13 +8,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     gainSlider.setSliderStyle(juce::Slider::Rotary);
     toneSlider.setSliderStyle(juce::Slider::Rotary);
     volumeSlider.setSliderStyle(juce::Slider::Rotary);
-    inputGainSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    inputGainSlider.setSliderStyle(juce::Slider::Rotary);
 
-    gainSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
-    toneSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
-    volumeSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
-    inputGainSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
-    bypassButton.setButtonText("Bypass");
+    gainSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    toneSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    volumeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    inputGainSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    bypassButton.setButtonText("Bypass Amp");
+    bypassIRToggle.setButtonText("Bypass IR");
 
     addAndMakeVisible(gainSlider);
     addAndMakeVisible(toneSlider);
@@ -58,22 +60,23 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor() {}
 
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (juce::Colours::black);
-    g.setColour (juce::Colours::white);
-    g.setFont (18.0f);
-    g.drawFittedText ("Guitar Amp Emulation", getLocalBounds(), juce::Justification::centredTop, 1);
+    auto image = juce::ImageCache::getFromMemory(background_png, background_png_len);
+    if (image.isValid())
+        g.drawImage(image, getLocalBounds().toFloat(), juce::RectanglePlacement::stretchToFit);
+    else
+        g.fillAll(juce::Colours::black);
 }
 
 void AudioPluginAudioProcessorEditor::resized()
 {
     auto area = getLocalBounds().reduced(40);
-    auto row = area.removeFromTop(200);
+    auto row = area.removeFromTop(160);
 
-    inputGainSlider.setBounds(row.removeFromLeft(100));
-    gainSlider.setBounds(row.removeFromLeft(100));
-    toneSlider.setBounds(row.removeFromLeft(100));
-    volumeSlider.setBounds(row.removeFromLeft(100));
-    bypassButton.setBounds(200, 300, 30, 100);
-    loadIRButton.setBounds(200, 350, 80, 30);
-    bypassIRToggle.setBounds(200, 450, 100, 30);
+    inputGainSlider.setBounds(row.removeFromLeft(105));
+    gainSlider.setBounds(row.removeFromLeft(105));
+    toneSlider.setBounds(row.removeFromLeft(105));
+    volumeSlider.setBounds(row.removeFromLeft(105));
+    bypassButton.setBounds(40, 153, 100, 30);
+    loadIRButton.setBounds(210, 305, 80, 30);
+    bypassIRToggle.setBounds(40, 177, 100, 30);
 }
