@@ -36,7 +36,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 62.0f, 2.0f);
 
     // Срез верхов после искажения (~1 кГц)
-    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 1000.0f, 0.f);
+    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 1000.0f, 0.5f);
     // Срез середины после обработки (~700 Гц)
     *midCut.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), 700.0f, 2.0f, juce::Decibels::decibelsToGain(-3.0f));
 }
@@ -102,7 +102,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     }
 
     // Выходной Low-pass фильтр (~1 кГц)
-    postLPF.process(juce::dsp::ProcessContextReplacing<float>(block));
+    // postLPF.process(juce::dsp::ProcessContextReplacing<float>(block));
 
     // Регулировка Tone
     if (tone != lastToneValue)
@@ -120,8 +120,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     // Вырез середины
     midCut.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    if (irLoaded && !irBypassed)
-        cabIR.process(juce::dsp::ProcessContextReplacing<float>(block));
+   if (irLoaded && !irBypassed)
+       cabIR.process(juce::dsp::ProcessContextReplacing<float>(block));
 
 }
 

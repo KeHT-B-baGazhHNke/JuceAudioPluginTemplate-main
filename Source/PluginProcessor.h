@@ -46,7 +46,6 @@ public:
     juce::dsp::Convolution cabIR;
     juce::TextButton loadIRButton { "Load IR" };
     juce::ToggleButton bypassIRToggle { "Bypass IR" };
-    juce::dsp::Convolution cabIR;
     bool irLoaded = false;
     bool irBypassed = false;
 

@@ -25,14 +25,24 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     loadIRButton.onClick = [this]()
     {
-        juce::FileChooser chooser("Select an IR file", {}, "*.wav");
-        if (chooser.browseForFileToOpen())
-            processor.loadImpulseResponse(chooser.getResult());
+        fileChooser = std::make_unique<juce::FileChooser>("Select an IR file", juce::File{}, "*.wav");
+
+        fileChooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+            [this](const juce::FileChooser& fc)
+            {
+                auto file = fc.getResult();
+                if (file.existsAsFile())
+                {
+                    if (auto* proc = dynamic_cast<AudioPluginAudioProcessor*>(&processor))
+                        proc->loadImpulseResponse(file);
+                }
+            });
     };
 
-    bypassIRToggle.onClick = [this]()
+    bypassIRToggle.onClick = [this]
     {
-        processor.setIRBypass(bypassIRToggle.getToggleState());
+         if (auto* proc = dynamic_cast<AudioPluginAudioProcessor*>(&processor))
+        proc->setIRBypass(!proc->irBypassed); // переключение состояния
     };
 
     gainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, "GAIN", gainSlider);

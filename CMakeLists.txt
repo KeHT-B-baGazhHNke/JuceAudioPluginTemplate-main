@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(Guitar_Amp_Emulation)
+project(Guitar_Amp_Emulation VERSION 1.0.0)
 
 
 set(CMAKE_CXX_STANDARD 17)
@@ -48,11 +48,19 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SourceFiles})
 
 target_sources(${PROJECT_NAME} PRIVATE ${SourceFiles})
 
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/ASIOSDK
+        ${CMAKE_CURRENT_SOURCE_DIR}/ASIOSDK/common
+        ${CMAKE_CURRENT_SOURCE_DIR}/ASIOSDK/host
+)
+
 target_compile_definitions(${PROJECT_NAME}
     PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
+        JUCE_ASIO=1
 )
 
 target_link_libraries(${PROJECT_NAME}
