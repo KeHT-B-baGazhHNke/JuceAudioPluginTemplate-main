@@ -18,7 +18,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inputGainAttachment;
     juce::ToggleButton bypassButton;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAttachment;
-    juce::TextButton loadIRButton { "Load IR" };
+    juce::TextButton loadIRButton;
     juce::ToggleButton bypassIRToggle;
     std::unique_ptr<juce::FileChooser> fileChooser;
 

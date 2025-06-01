@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "background_data.h"
+#include "Constants.h"
 
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
@@ -10,12 +11,13 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     volumeSlider.setSliderStyle(juce::Slider::Rotary);
     inputGainSlider.setSliderStyle(juce::Slider::Rotary);
 
-    gainSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    toneSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    volumeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    inputGainSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    gainSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, UIConstants::textboxWidth, UIConstants::textboxHeight);
+    toneSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, UIConstants::textboxWidth, UIConstants::textboxHeight);
+    volumeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, UIConstants::textboxWidth, UIConstants::textboxHeight);
+    inputGainSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, UIConstants::textboxWidth, UIConstants::textboxHeight);
     bypassButton.setButtonText("Bypass Amp");
     bypassIRToggle.setButtonText("Bypass IR");
+    loadIRButton.setButtonText("Load IR");
 
     addAndMakeVisible(gainSlider);
     addAndMakeVisible(toneSlider);
@@ -53,7 +55,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     inputGainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, "INPUT_GAIN", inputGainSlider);
     bypassAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.apvts, "BYPASS", bypassButton);
 
-    setSize (500, 500);
+    setSize (UIConstants::windowWidth, UIConstants::windowHeight);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor() {}
@@ -69,14 +71,14 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    auto area = getLocalBounds().reduced(40);
-    auto row = area.removeFromTop(160);
+    auto area = getLocalBounds().reduced(UIConstants::sliderTopOffset);
+    auto row = area.removeFromTop(UIConstants::sliderRowHeight);
 
-    inputGainSlider.setBounds(row.removeFromLeft(105));
-    gainSlider.setBounds(row.removeFromLeft(105));
-    toneSlider.setBounds(row.removeFromLeft(105));
-    volumeSlider.setBounds(row.removeFromLeft(105));
-    bypassButton.setBounds(40, 153, 100, 30);
-    loadIRButton.setBounds(210, 305, 80, 30);
-    bypassIRToggle.setBounds(40, 177, 100, 30);
+    inputGainSlider.setBounds(row.removeFromLeft(UIConstants::sliderLeftOffset));
+    gainSlider.setBounds(row.removeFromLeft(UIConstants::sliderLeftOffset));
+    toneSlider.setBounds(row.removeFromLeft(UIConstants::sliderLeftOffset));
+    volumeSlider.setBounds(row.removeFromLeft(UIConstants::sliderLeftOffset));
+    bypassButton.setBounds(UIConstants::buttonX, UIConstants::buttonY1, UIConstants::buttonWidth, UIConstants::buttonHeight);
+    loadIRButton.setBounds(UIConstants::IrX, UIConstants::IrY, UIConstants::IrWidth, UIConstants::IrHeight);
+    bypassIRToggle.setBounds(UIConstants::buttonX, UIConstants::buttonY2, UIConstants::buttonWidth, UIConstants::buttonHeight);
 }

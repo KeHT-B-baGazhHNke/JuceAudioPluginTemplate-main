@@ -42,19 +42,19 @@ public:
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> inputHPF;
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> postLPF;
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> toneHighShelf;
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> lowShelf;
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> midCut;
     juce::dsp::IIR::Filter<float> interstageHPF;
     juce::dsp::IIR::Filter<float> interstageLPF;
     juce::dsp::IIR::Filter<float> interstageMid;
 
     juce::dsp::Convolution cabIR;
-    juce::TextButton loadIRButton { "Load IR" };
-    juce::ToggleButton bypassIRToggle { "Bypass IR" };
-    bool irLoaded = false;
-    bool irBypassed = false;
+    juce::TextButton loadIRButton;
+    juce::ToggleButton bypassIRToggle;
+    bool irLoaded;
+    bool irBypassed;
 
-
-    float lastToneValue = -1.0f; // Для отслеживания изменений
+    float lastToneValue; // Для отслеживания изменений
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
 

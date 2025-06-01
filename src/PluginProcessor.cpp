@@ -31,18 +31,26 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     toneHighShelf.prepare(spec);
     midCut.prepare(spec);
     cabIR.prepare(spec);
+    lowShelf.prepare(spec);
 
     // Срез низов на входе (~62 Гц)
-    *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 100.0f, 0.7f);
+    *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, DSPConstants::inputHPFFrequency, DSPConstants::defaultQ);
 
     // Срез верхов после искажения (~1 кГц)
-    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 6500.0f, 0.7f);
+    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 6000.0f, DSPConstants::defaultQ);
     // Срез середины после обработки (~700 Гц)
     *midCut.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), 700.0f, 2.0f, juce::Decibels::decibelsToGain(-1.5f));
     // Каскадные фильтры между сатурациями (эмуляция реактивных цепей усилителя)
-    interstageHPF.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 120.0f, 0.707f);     // Удаление гула и низов
+    interstageHPF.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 120.0f, DSPConstants::defaultQ);     // Удаление гула и низов
     interstageMid.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, 600.0f, 1.5f, juce::Decibels::decibelsToGain(-2.5f)); // Вырез середины
-    interstageLPF.coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 8000.0f, 0.707f);     // Срез высоких перед финальной сатурацией
+    interstageLPF.coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 6000.0f, DSPConstants::defaultQ);     // Срез высоких перед финальной сатурацией
+    *lowShelf.state = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(getSampleRate(), 300.0f, DSPConstants::defaultQ, juce::Decibels::decibelsToGain(6.0f));
+    
+    bypassIRToggle.setButtonText("Bypass IR");
+    loadIRButton.setButtonText("Load IR");
+    irLoaded = false;
+    irBypassed = false;
+    lastToneValue = -1.0f;
 
 }
 
@@ -116,6 +124,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     // Входной High-pass фильтр (~100 Гц)
     inputHPF.process(juce::dsp::ProcessContextReplacing<float>(block));
 
+    postLPF.process(juce::dsp::ProcessContextReplacing<float>(block));
+
 
     // Получаем указатель на единственный канал (моно)
     auto* data = buffer.getWritePointer(0);
@@ -133,14 +143,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
         // Первый каскад сатурации (мягкий)
         float stage1 = triodeCurve(x * 2.5f);
 
-        // Фильтрация
-        stage1 = interstageHPF.processSample(stage1);
-        stage1 = interstageMid.processSample(stage1);
-
         // Второй каскад сатурации (более агрессивный, с гейном)
         float stage2 = tubeClip(x * (gain * 3.0f + 1.0f));
 
         stage2 = interstageLPF.processSample(stage2);
+        stage2 = interstageHPF.processSample(stage2);
+        stage2 = interstageMid.processSample(stage2);
 
         // Дополнительная сатурация (необязательная)
         float stage3 = std::tanh(stage2 * 1.5f); // третья стадия добавляет плотность
@@ -171,6 +179,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
     // Вырез середины
     midCut.process(juce::dsp::ProcessContextReplacing<float>(block));
+
+    lowShelf.process(juce::dsp::ProcessContextReplacing<float>(block));
 
    if (irLoaded && !irBypassed)
        cabIR.process(juce::dsp::ProcessContextReplacing<float>(block));

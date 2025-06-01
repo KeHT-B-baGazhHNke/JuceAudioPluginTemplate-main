@@ -23,10 +23,10 @@ CPMAddPackage(
 )
 
 set(SourceFiles
-        Source/PluginEditor.cpp
-        Source/PluginEditor.h
-        Source/PluginProcessor.cpp
-        Source/PluginProcessor.h
+        src/PluginEditor.cpp
+        headers/PluginEditor.h
+        src/PluginProcessor.cpp
+        headers/PluginProcessor.h
 )
 
 juce_add_plugin(${PROJECT_NAME}
@@ -54,6 +54,8 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/ASIOSDK/common
         ${CMAKE_CURRENT_SOURCE_DIR}/ASIOSDK/host
         ${CMAKE_CURRENT_SOURCE_DIR}/Resources
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/headers
 )
 
 target_compile_definitions(${PROJECT_NAME}
