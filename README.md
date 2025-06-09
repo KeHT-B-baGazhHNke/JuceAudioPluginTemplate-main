@@ -24,7 +24,7 @@
 ## ⚙️ Архитектура обработки звука
 
 Сигнал проходит следующие этапы обработки:
-[Input] → [High-Pass and Low-Pass Filters] → [Tube Clipping + Interstage Filters] → [Tone Control] → [Cabinet Simulation (IR)] → [Output]
+[Input] → [High-Pass and Low-Pass Filters] → [Tube Clipping + Interstage Filters] → [Tone Control] → [Mid-Cut and Low-Shelf Filters] → [Cabinet Simulation (IR)] → [Output]
 
 ### Подробное описание блоков:
 
@@ -34,6 +34,7 @@
 | High-Pass and Low-Pass Filters | Убирает низкие и верхние частоты до усиления |
 | Tube Clipping + Interstage Filters | Имитация перегрузки лампового усилителя с межкаскадными фильтрами |
 | Tone Control | Регулировка тембра через High-Shelf фильтр |
+| Mid-Cut and Low-Shelf Filters | Добавляет низкие и вырезает средние частоты после усиления для более плотного звука |
 | Cabinet Simulation (IR) | Свёртка с импульсной характеристикой гитарного динамика |
 | Output | Выходной сигнал |
 
