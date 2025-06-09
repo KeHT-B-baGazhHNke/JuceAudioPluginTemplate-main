@@ -24,6 +24,37 @@
 ## ⚙️ Архитектура обработки звука
 
 Сигнал проходит следующие этапы обработки:
-[Input] → [Input Gain] → [High-Pass Filter] →
-→ [Tube Clipping + Tone Shaping] → [Volume Control] →
-→ [EQ: Low/Mid/High Filters] → [Cabinet Simulation (IR)] → [Output]
+[Input] → [High-Pass and Low-Pass Filters] → [Tube Clipping + Interstage Filters] → [Tone Control] → [Cabinet Simulation (IR)] → [Output]
+
+### Подробное описание блоков:
+
+| Блок | Описание |
+|------|----------|
+| Input | Входной сигнал |
+| High-Pass and Low-Pass Filters | Убирает низкие и верхние частоты до усиления |
+| Tube Clipping + Interstage Filters | Имитация перегрузки лампового усилителя с межкаскадными фильтрами |
+| Tone Control | Регулировка тембра через High-Shelf фильтр |
+| Cabinet Simulation (IR) | Свёртка с импульсной характеристикой гитарного динамика |
+| Output | Выходной сигнал |
+
+---
+
+## 🛠️ Технологии
+
+- **JUCE Framework** – UI и работа с аудио
+- **CMake** – система сборки
+
+---
+
+## 📦 Установка и сборка
+
+```bash
+# Клонирование репозитория
+git clone https://github.com/KeHT-B-baGazhHNke/JuceAudioPluginTemplate-main.git 
+cd JuceAudioPluginTemplate-main
+
+# Сборка
+mkdir build
+cd build
+cmake .. -G "Visual Studio 17 2022"
+cmake --build . --config Release
