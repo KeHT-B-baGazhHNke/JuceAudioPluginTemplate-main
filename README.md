@@ -59,3 +59,5 @@ mkdir build
 cd build
 cmake .. -G "Visual Studio 17 2022"
 cmake --build . --config Release
+```
+- После сборки плагин будет находиться в директории build/Guitar_Amp_Emulation_artefacts/Release.
