@@ -28,7 +28,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     juce::dsp::ProcessSpec spec{ sampleRate, static_cast<uint32_t>(samplesPerBlock), static_cast<uint32_t>(getTotalNumInputChannels()) };
 
     inputHPF.prepare(spec);
-    postLPF.prepare(spec);
+    inputLPF.prepare(spec);
     toneHighShelf.prepare(spec);
     midCut.prepare(spec);
     cabIR.prepare(spec);
@@ -37,7 +37,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, DSPConstants::inputHPFFrequency, DSPConstants::defaultQ);
 
-    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, DSPConstants::postLPFFrequency, DSPConstants::defaultQ);
+    *inputLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, DSPConstants::inputLPFFrequency, DSPConstants::defaultQ);
 
     *midCut.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), DSPConstants::midCutFrequency, DSPConstants::midCutQ, juce::Decibels::decibelsToGain(DSPConstants::midCutGain));
 
@@ -112,7 +112,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
     inputHPF.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    postLPF.process(juce::dsp::ProcessContextReplacing<float>(block));
+    inputLPF.process(juce::dsp::ProcessContextReplacing<float>(block));
 
     // Получаем указатель на единственный канал (моно)
     auto* data = buffer.getWritePointer(0);

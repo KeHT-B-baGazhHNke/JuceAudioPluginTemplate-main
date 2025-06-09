@@ -24,7 +24,7 @@ namespace UIConstants {
 
 namespace DSPConstants {
     constexpr float inputHPFFrequency = 400.0f;
-    constexpr float postLPFFrequency = 6000.0f;
+    constexpr float inputLPFFrequency = 6000.0f;
     constexpr float midCutFrequency = 700.0f;
     constexpr float midCutQ = 2.0f;
     constexpr float midCutGain = -1.5f;
