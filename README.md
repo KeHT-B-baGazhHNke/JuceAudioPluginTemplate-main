@@ -1,4 +1,4 @@
-# Guitar Amp Emulation VST Plugin (JUCE + CMake)
+# Guitar Amp Emulation (JUCE + CMake)
 
 Эмуляция аналогового гитарного усилителя в виде VST3 плагина и Standalone приложения на основе фреймворка [JUCE](https://juce.com)  и встроенной библиотеки DSP.
 
