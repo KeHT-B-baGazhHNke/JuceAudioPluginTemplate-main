@@ -21,7 +21,7 @@
 
 ---
 
-## ⚙️ Архитектура обработки звука
+## Архитектура обработки звука
 
 Сигнал проходит следующие этапы обработки:
 [Input] → [High-Pass and Low-Pass Filters] → [Tube Clipping + Interstage Filters] → [Tone Control] → [Mid-Cut and Low-Shelf Filters] → [Cabinet Simulation (IR)] → [Output]
