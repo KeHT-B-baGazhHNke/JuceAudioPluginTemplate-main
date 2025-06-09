@@ -54,7 +54,8 @@ public:
     bool irLoaded;
     bool irBypassed;
 
-    float lastToneValue; // Для отслеживания изменений
+    float lastToneValue;
+    
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
 

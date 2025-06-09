@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Constants.h"
 
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
      : AudioProcessor (BusesProperties().withInput ("Input", juce::AudioChannelSet::mono(), true)
@@ -33,18 +34,18 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     cabIR.prepare(spec);
     lowShelf.prepare(spec);
 
-    // Срез низов на входе (~62 Гц)
+
     *inputHPF.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, DSPConstants::inputHPFFrequency, DSPConstants::defaultQ);
 
-    // Срез верхов после искажения (~1 кГц)
-    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 6000.0f, DSPConstants::defaultQ);
-    // Срез середины после обработки (~700 Гц)
-    *midCut.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), 700.0f, 2.0f, juce::Decibels::decibelsToGain(-1.5f));
-    // Каскадные фильтры между сатурациями (эмуляция реактивных цепей усилителя)
-    interstageHPF.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 120.0f, DSPConstants::defaultQ);     // Удаление гула и низов
-    interstageMid.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, 600.0f, 1.5f, juce::Decibels::decibelsToGain(-2.5f)); // Вырез середины
-    interstageLPF.coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 6000.0f, DSPConstants::defaultQ);     // Срез высоких перед финальной сатурацией
-    *lowShelf.state = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(getSampleRate(), 300.0f, DSPConstants::defaultQ, juce::Decibels::decibelsToGain(6.0f));
+    *postLPF.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, DSPConstants::postLPFFrequency, DSPConstants::defaultQ);
+
+    *midCut.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), DSPConstants::midCutFrequency, DSPConstants::midCutQ, juce::Decibels::decibelsToGain(DSPConstants::midCutGain));
+
+    interstageHPF.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, DSPConstants::interstageHPFFreq, DSPConstants::defaultQ);
+    interstageMid.coefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, DSPConstants::interstageMidFreq, DSPConstants::interstageMidQ, juce::Decibels::decibelsToGain(DSPConstants::interstageMidGain));
+    interstageLPF.coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, DSPConstants::interstageLPFFreq, DSPConstants::defaultQ);
+
+    *lowShelf.state = *juce::dsp::IIR::Coefficients<float>::makeLowShelf(getSampleRate(), DSPConstants::LowShelfFreq, DSPConstants::defaultQ, juce::Decibels::decibelsToGain(DSPConstants::LowShelfGain));
     
     bypassIRToggle.setButtonText("Bypass IR");
     loadIRButton.setButtonText("Load IR");
@@ -85,22 +86,11 @@ bool AudioPluginAudioProcessor::isIRBypassed() const { return irBypassed; }
 
 namespace
 {
-    // Асимметричный клиппинг
     inline float tubeClip(float x)
     {
-        float pos = std::tanh(x * 2.5f);  // сильнее клип вверх
-        float neg = std::tanh(x * 1.0f);  // слабее клип вниз
+        float pos = std::tanh(x * 2.5f);
+        float neg = std::tanh(x);
         return x >= 0.0f ? pos : neg;
-    }
-
-    inline  float triodeCurve(float x)
-    {
-        // Простейшая модель триода на основе Koren's model approximation
-        const float gain = 3.0f;
-        const float asym = 0.2f;
-
-        float nonlinear = std::tanh(gain * (x + asym)) - std::tanh(gain * (x - asym));
-        return 0.5f * nonlinear;
     }
 }
 
@@ -108,24 +98,21 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 {
     auto* bypassParam = apvts.getRawParameterValue("BYPASS");
     if (*bypassParam > 0.5f)
-        return; // Если включён bypass, просто пропускаем обработку
+        return;
+
     juce::ScopedNoDenormals noDenormals;
 
-    // Получаем параметры
     float inputGain = *apvts.getRawParameterValue("INPUT_GAIN");
     float gain      = *apvts.getRawParameterValue("GAIN");
     float tone      = *apvts.getRawParameterValue("TONE");
     float volume    = *apvts.getRawParameterValue("VOLUME");
     float prevSample = 0.0f;
     
-    // Оборачиваем буфер в DSP-блок
     juce::dsp::AudioBlock<float> block(buffer);
 
-    // Входной High-pass фильтр (~100 Гц)
     inputHPF.process(juce::dsp::ProcessContextReplacing<float>(block));
 
     postLPF.process(juce::dsp::ProcessContextReplacing<float>(block));
-
 
     // Получаем указатель на единственный канал (моно)
     auto* data = buffer.getWritePointer(0);
@@ -140,26 +127,23 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
         x += transient;
         prevSample = x;
 
-        // Первый каскад сатурации (мягкий)
-        float stage1 = triodeCurve(x * 2.5f);
+        // Первый каскад
+        float stage1 = tubeClip(x * (gain * 3.0f + 1.0f));
 
-        // Второй каскад сатурации (более агрессивный, с гейном)
-        float stage2 = tubeClip(x * (gain * 3.0f + 1.0f));
+        stage1 = interstageLPF.processSample(stage1);
+        stage1 = interstageHPF.processSample(stage1);
+        stage1 = interstageMid.processSample(stage1);
 
-        stage2 = interstageLPF.processSample(stage2);
-        stage2 = interstageHPF.processSample(stage2);
-        stage2 = interstageMid.processSample(stage2);
-
-        // Дополнительная сатурация (необязательная)
-        float stage3 = std::tanh(stage2 * 1.5f); // третья стадия добавляет плотность
+        // Второй каскад
+        float stage2 = std::tanh(stage1 * 1.5f);
 
         // Удаление "гейта" на затухании
         float threshold = 0.005f;
-        if (std::abs(stage3) < threshold)
-            stage3 *= juce::jmap(std::abs(stage3), 0.0f, threshold, 0.5f, 1.0f);
+        if (std::abs(stage2) < threshold)
+            stage2 *= juce::jmap(std::abs(stage2), 0.0f, threshold, 0.5f, 1.0f);
 
-        // Громкость с логарифмом (отзывчивая)
-        float out = stage3 * std::pow(volume, 0.5f);
+        // Громкость  логарифмическая
+        float out = stage2 * std::pow(volume, 0.5f);
         data[sample] = out;
     }
 
@@ -169,15 +153,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     {
         lastToneValue = tone;
 
-        // Настройка high-shelf фильтра на основе ручки tone
-        float toneFreq = 4000.0f;  // Частота фильтра high-shelf
         float toneGainDb = juce::jmap(tone, 0.0f, 1.0f, -6.0f, 6.0f);  // амплитуда фильтра
 
-        *toneHighShelf.state = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(getSampleRate(), toneFreq, 0.707f, juce::Decibels::decibelsToGain(toneGainDb));
+        *toneHighShelf.state = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(getSampleRate(), DSPConstants::toneFreq, DSPConstants::defaultQ, juce::Decibels::decibelsToGain(toneGainDb));
     }
     toneHighShelf.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    // Вырез середины
     midCut.process(juce::dsp::ProcessContextReplacing<float>(block));
 
     lowShelf.process(juce::dsp::ProcessContextReplacing<float>(block));
@@ -210,10 +191,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("INPUT_GAIN", "Input Gain", 1.0f, 10.0f, 5.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("GAIN", "Gain", 0.0f, 20.0f, 10.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("TONE", "Tone", 0.0f, 1.0f, 0.5f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("VOLUME", "Volume", 0.0f, 1.0f, 0.5f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("INPUT_GAIN", "Input Gain", DSPConstants::inputMin, DSPConstants::inputMax, DSPConstants::inputDefault));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("GAIN", "Gain", DSPConstants::gainMin, DSPConstants::gainMax, DSPConstants::gainDefault));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("TONE", "Tone", DSPConstants::toneMin, DSPConstants::toneMax, DSPConstants::toneDefault));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("VOLUME", "Volume", DSPConstants::volumeMin, DSPConstants::volumeMax, DSPConstants::volumeDefault));
     params.push_back(std::make_unique<juce::AudioParameterBool>("BYPASS", "Bypass", false));
 
     return { params.begin(), params.end() };
