@@ -82,4 +82,5 @@ target_link_libraries(${PROJECT_NAME}
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
-
+set(JUCE_DIR ${juce_SOURCE_DIR})
+add_subdirectory(Tests)
